@@ -75,8 +75,8 @@ void GenerateAllBinaryCombinationsForMethods()
             {
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
-            var newColumn = inPlace ? this : (<#=fullReturnType#>)Clone();
-            newColumn.ColumnContainer.HandleOperation(operation, column.ColumnContainer);
+            var newColumn = inPlace ? this : new <#=fullReturnType#>(Name, Length);
+            this.ColumnContainer.HandleOperation(operation, column.ColumnContainer, newColumn.ColumnContainer);
             return newColumn;
         }
 

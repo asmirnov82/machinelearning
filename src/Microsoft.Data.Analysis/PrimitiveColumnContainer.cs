@@ -100,7 +100,27 @@ namespace Microsoft.Data.Analysis
 
         public PrimitiveColumnContainer(long length = 0)
         {
-            AppendMany(null, length);
+            if (length == 0)
+                return;
+
+            Length = length;
+            NullCount = length;
+
+            var remaining = length;
+            while (remaining > 0)
+            {
+                var bufferLength = (int)Math.Min(DataFrameBuffer<T>.MaxCapacity, remaining);
+                var valueBuffer = new DataFrameBuffer<T>(bufferLength);
+                valueBuffer.IncreaseSize(bufferLength);
+                Buffers.Add(valueBuffer);
+
+                var bitmapSize = (bufferLength + 7) / 8;
+                var bitmapBuffer = new DataFrameBuffer<byte>(bitmapSize);
+                bitmapBuffer.IncreaseSize(bitmapSize);
+                NullBitMapBuffers.Add(bitmapBuffer);
+
+                remaining -= bufferLength;
+            }
         }
 
         public void Resize(long length)
@@ -153,7 +173,7 @@ namespace Microsoft.Data.Analysis
                 }
 
                 DataFrameBuffer<T> mutableLastBuffer = Buffers.GetOrCreateMutable(Buffers.Count - 1);
-                DataFrameBuffer<byte> lastNullBitMapBuffer = NullBitMapBuffers.GetOrCreateMutable(NullBitMapBuffers.Count - 1);
+                DataFrameBuffer<byte> mutableLastNullBitMapBuffer = NullBitMapBuffers.GetOrCreateMutable(NullBitMapBuffers.Count - 1);
 
                 //Calculate how many values we can additionaly allocate and not exceed the MaxCapacity
                 int originalBufferLength = mutableLastBuffer.Length;
@@ -161,14 +181,14 @@ namespace Microsoft.Data.Analysis
                 mutableLastBuffer.IncreaseSize(allocatable);
 
                 //Calculate how many bytes we have additionaly allocate to store allocatable number of bits (need to take into account unused bits inside already allocated bytes)
-                int nullBufferAllocatable = (originalBufferLength + allocatable + 7) / 8 - lastNullBitMapBuffer.Length;
-                lastNullBitMapBuffer.IncreaseSize(nullBufferAllocatable);
+                int nullBufferAllocatable = (originalBufferLength + allocatable + 7) / 8 - mutableLastNullBitMapBuffer.Length;
+                mutableLastNullBitMapBuffer.IncreaseSize(nullBufferAllocatable);
                 Length += allocatable;
 
                 if (value.HasValue)
                 {
                     mutableLastBuffer.RawSpan.Slice(mutableLastBuffer.Length - allocatable, allocatable).Fill(value.Value);
-                    BitUtility.SetBits(lastNullBitMapBuffer.RawSpan, originalBufferLength, allocatable, true);
+                    BitUtility.SetBits(mutableLastNullBitMapBuffer.RawSpan, originalBufferLength, allocatable, true);
                 }
 
                 remaining -= allocatable;

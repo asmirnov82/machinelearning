@@ -21,8 +21,8 @@ namespace Microsoft.Data.Analysis
             {
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
-            var newColumn = inPlace ? this : (DecimalDataFrameColumn)Clone();
-            newColumn.ColumnContainer.HandleOperation(operation, column.ColumnContainer);
+            var newColumn = inPlace ? this : new DecimalDataFrameColumn(Name, Length);
+            this.ColumnContainer.HandleOperation(operation, column.ColumnContainer, newColumn.ColumnContainer);
             return newColumn;
         }
 
@@ -51,8 +51,8 @@ namespace Microsoft.Data.Analysis
             {
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
-            var newColumn = inPlace ? this : (DoubleDataFrameColumn)Clone();
-            newColumn.ColumnContainer.HandleOperation(operation, column.ColumnContainer);
+            var newColumn = inPlace ? this : new DoubleDataFrameColumn(Name, Length);
+            this.ColumnContainer.HandleOperation(operation, column.ColumnContainer, newColumn.ColumnContainer);
             return newColumn;
         }
 
@@ -81,8 +81,8 @@ namespace Microsoft.Data.Analysis
             {
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
-            var newColumn = inPlace ? this : (SingleDataFrameColumn)Clone();
-            newColumn.ColumnContainer.HandleOperation(operation, column.ColumnContainer);
+            var newColumn = inPlace ? this : new SingleDataFrameColumn(Name, Length);
+            this.ColumnContainer.HandleOperation(operation, column.ColumnContainer, newColumn.ColumnContainer);
             return newColumn;
         }
 
@@ -111,8 +111,8 @@ namespace Microsoft.Data.Analysis
             {
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
-            var newColumn = inPlace ? this : (Int32DataFrameColumn)Clone();
-            newColumn.ColumnContainer.HandleOperation(operation, column.ColumnContainer);
+            var newColumn = inPlace ? this : new Int32DataFrameColumn(Name, Length);
+            this.ColumnContainer.HandleOperation(operation, column.ColumnContainer, newColumn.ColumnContainer);
             return newColumn;
         }
 
@@ -141,8 +141,8 @@ namespace Microsoft.Data.Analysis
             {
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
-            var newColumn = inPlace ? this : (Int64DataFrameColumn)Clone();
-            newColumn.ColumnContainer.HandleOperation(operation, column.ColumnContainer);
+            var newColumn = inPlace ? this : new Int64DataFrameColumn(Name, Length);
+            this.ColumnContainer.HandleOperation(operation, column.ColumnContainer, newColumn.ColumnContainer);
             return newColumn;
         }
 
@@ -171,8 +171,8 @@ namespace Microsoft.Data.Analysis
             {
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
-            var newColumn = inPlace ? this : (UInt32DataFrameColumn)Clone();
-            newColumn.ColumnContainer.HandleOperation(operation, column.ColumnContainer);
+            var newColumn = inPlace ? this : new UInt32DataFrameColumn(Name, Length);
+            this.ColumnContainer.HandleOperation(operation, column.ColumnContainer, newColumn.ColumnContainer);
             return newColumn;
         }
 
@@ -201,8 +201,8 @@ namespace Microsoft.Data.Analysis
             {
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
-            var newColumn = inPlace ? this : (UInt64DataFrameColumn)Clone();
-            newColumn.ColumnContainer.HandleOperation(operation, column.ColumnContainer);
+            var newColumn = inPlace ? this : new UInt64DataFrameColumn(Name, Length);
+            this.ColumnContainer.HandleOperation(operation, column.ColumnContainer, newColumn.ColumnContainer);
             return newColumn;
         }
 

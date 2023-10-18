@@ -351,7 +351,7 @@ void GenerateAllBinaryBitwiseOperationsForMethod(string methodName)
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
             BooleanDataFrameColumn retColumn = inPlace ? this : CloneAsBooleanColumn();
-            retColumn.ColumnContainer.HandleOperation(BinaryOperation.<#=methodName#>, column.ColumnContainer);
+            retColumn.ColumnContainer.HandleOperation(BinaryOperation.<#=methodName#>, column.ColumnContainer, retColumn.ColumnContainer);
             return retColumn;
         }
     }

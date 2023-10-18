@@ -8769,7 +8769,7 @@ namespace Microsoft.Data.Analysis
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
             BooleanDataFrameColumn retColumn = inPlace ? this : CloneAsBooleanColumn();
-            retColumn.ColumnContainer.HandleOperation(BinaryOperation.And, column.ColumnContainer);
+            retColumn.ColumnContainer.HandleOperation(BinaryOperation.And, column.ColumnContainer, retColumn.ColumnContainer);
             return retColumn;
         }
     }
@@ -8793,7 +8793,7 @@ namespace Microsoft.Data.Analysis
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
             BooleanDataFrameColumn retColumn = inPlace ? this : CloneAsBooleanColumn();
-            retColumn.ColumnContainer.HandleOperation(BinaryOperation.Or, column.ColumnContainer);
+            retColumn.ColumnContainer.HandleOperation(BinaryOperation.Or, column.ColumnContainer, retColumn.ColumnContainer);
             return retColumn;
         }
     }
@@ -8817,7 +8817,7 @@ namespace Microsoft.Data.Analysis
                 throw new ArgumentException(Strings.MismatchedColumnLengths, nameof(column));
             }
             BooleanDataFrameColumn retColumn = inPlace ? this : CloneAsBooleanColumn();
-            retColumn.ColumnContainer.HandleOperation(BinaryOperation.Xor, column.ColumnContainer);
+            retColumn.ColumnContainer.HandleOperation(BinaryOperation.Xor, column.ColumnContainer, retColumn.ColumnContainer);
             return retColumn;
         }
     }

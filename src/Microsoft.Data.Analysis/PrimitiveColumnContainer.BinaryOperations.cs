@@ -9,7 +9,7 @@ namespace Microsoft.Data.Analysis
     internal partial class PrimitiveColumnContainer<T>
         where T : unmanaged
     {
-        public PrimitiveColumnContainer<T> HandleOperation(BinaryOperation operation, PrimitiveColumnContainer<T> right)
+        public void HandleOperation(BinaryOperation operation, PrimitiveColumnContainer<T> right, PrimitiveColumnContainer<T> destination)
         {
             var arithmetic = Arithmetic<T>.Instance;
 
@@ -19,22 +19,26 @@ namespace Microsoft.Data.Analysis
             long nullCount = specialCase ? NullCount : 0;
             for (int i = 0; i < this.Buffers.Count; i++)
             {
-                var mutableBuffer = this.Buffers.GetOrCreateMutable(i);
-                var leftSpan = mutableBuffer.Span;
+                var destinationSpan = destination.Buffers.GetOrCreateMutable(i).Span;
+                var leftSpan = this.Buffers[i].ReadOnlySpan;
                 var rightSpan = right.Buffers[i].ReadOnlySpan;
 
-                var leftValidity = this.NullBitMapBuffers.GetOrCreateMutable(i).Span;
+                var leftValidity = this.NullBitMapBuffers[i].ReadOnlySpan;
                 var rightValidity = right.NullBitMapBuffers[i].ReadOnlySpan;
+
+                var destinationValidity = destination.NullBitMapBuffers.GetOrCreateMutable(i).Span;
 
                 if (specialCase)
                 {
+                    leftValidity.CopyTo(destinationValidity);
+
                     for (var j = 0; j < leftSpan.Length; j++)
                     {
                         if (BitUtility.GetBit(rightValidity, j))
-                            leftSpan[j] = arithmetic.HandleOperation(operation, leftSpan[j], rightSpan[j]);
+                            destinationSpan[j] = arithmetic.HandleOperation(operation, leftSpan[j], rightSpan[j]);
                         else if (BitUtility.GetBit(leftValidity, j))
                         {
-                            BitUtility.ClearBit(leftValidity, j);
+                            BitUtility.ClearBit(destinationValidity, j);
 
                             //Increase NullCount
                             nullCount++;
@@ -43,16 +47,15 @@ namespace Microsoft.Data.Analysis
                 }
                 else
                 {
-                    arithmetic.HandleOperation(operation, leftSpan, rightSpan, leftSpan);
-                    ValidityElementwiseAnd(leftValidity, rightValidity, leftValidity);
+                    arithmetic.HandleOperation(operation, leftSpan, rightSpan, destinationSpan);
+                    ValidityElementwiseAnd(leftValidity, rightValidity, destinationValidity);
 
                     //Calculate NullCount
-                    nullCount += mutableBuffer.Length - BitUtility.GetBitCount(leftValidity, mutableBuffer.Length);
+                    nullCount += destinationSpan.Length - BitUtility.GetBitCount(destinationValidity, destinationSpan.Length);
                 }
             }
 
-            NullCount = nullCount;
-            return this;
+            destination.NullCount = nullCount;
         }
 
         public PrimitiveColumnContainer<T> HandleOperation(BinaryOperation operation, T right)

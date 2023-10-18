@@ -903,7 +903,7 @@ namespace Microsoft.Data.Analysis
                         // No conversions
                         PrimitiveDataFrameColumn<U> primitiveColumn = this as PrimitiveDataFrameColumn<U>;
                         PrimitiveDataFrameColumn<U> newColumn = inPlace ? primitiveColumn : primitiveColumn.Clone();
-                        newColumn._columnContainer.HandleOperation(operation, column._columnContainer);
+                        newColumn._columnContainer.HandleOperation(operation, column._columnContainer, newColumn.ColumnContainer);
                         return newColumn;
                     }
                     else
@@ -913,7 +913,7 @@ namespace Microsoft.Data.Analysis
                             throw new ArgumentException(string.Format(Strings.MismatchedColumnValueType, typeof(T)), nameof(column));
                         }
                         PrimitiveDataFrameColumn<decimal> decimalColumn = CloneAsDecimalColumn();
-                        decimalColumn._columnContainer.HandleOperation(operation, column.CloneAsDecimalColumn()._columnContainer);
+                        decimalColumn._columnContainer.HandleOperation(operation, column.CloneAsDecimalColumn()._columnContainer, decimalColumn._columnContainer);
                         return decimalColumn;
                     }
                 case Type DateTimeType when DateTimeType == typeof(DateTime):
@@ -938,7 +938,7 @@ namespace Microsoft.Data.Analysis
                         // No conversions
                         PrimitiveDataFrameColumn<U> primitiveColumn = this as PrimitiveDataFrameColumn<U>;
                         PrimitiveDataFrameColumn<U> newColumn = inPlace ? primitiveColumn : primitiveColumn.Clone();
-                        newColumn._columnContainer.HandleOperation(operation, column._columnContainer);
+                        newColumn._columnContainer.HandleOperation(operation, column._columnContainer, newColumn._columnContainer);
                         return newColumn;
                     }
                     else
@@ -950,13 +950,13 @@ namespace Microsoft.Data.Analysis
                         if (typeof(U) == typeof(decimal))
                         {
                             PrimitiveDataFrameColumn<decimal> decimalColumn = CloneAsDecimalColumn();
-                            decimalColumn._columnContainer.HandleOperation(operation, (column as PrimitiveDataFrameColumn<decimal>)._columnContainer);
+                            decimalColumn._columnContainer.HandleOperation(operation, (column as PrimitiveDataFrameColumn<decimal>)._columnContainer, decimalColumn._columnContainer);
                             return decimalColumn;
                         }
                         else
                         {
                             PrimitiveDataFrameColumn<double> doubleColumn = CloneAsDoubleColumn();
-                            doubleColumn._columnContainer.HandleOperation(operation, column.CloneAsDoubleColumn()._columnContainer);
+                            doubleColumn._columnContainer.HandleOperation(operation, column.CloneAsDoubleColumn()._columnContainer, doubleColumn._columnContainer);
                             return doubleColumn;
                         }
                     }
