@@ -120,6 +120,9 @@
   <data name="AmountOfRowsShown" xml:space="preserve">
     <value>  ... {0} of total {1}</value>
   </data>
+  <data name="ArgumentOutOfRange_ExceededMemoryLimitOn32Bit" xml:space="preserve">
+    <value>Attempt to allocate more than MaxInt bytes of memory on a 32 bit platform.</value>
+  </data>
   <data name="BadColumnCast" xml:space="preserve">
     <value>Cannot cast column holding {0} values to type {1}</value>
   </data>

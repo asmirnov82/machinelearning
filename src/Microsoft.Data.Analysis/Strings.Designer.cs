@@ -70,6 +70,15 @@ namespace Microsoft.Data {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Attempt to allocate more than MaxInt bytes of memory on a 32 bit platform..
+        /// </summary>
+        internal static string ArgumentOutOfRange_ExceededMemoryLimitOn32Bit {
+            get {
+                return ResourceManager.GetString("ArgumentOutOfRange_ExceededMemoryLimitOn32Bit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot cast column holding {0} values to type {1}.
         /// </summary>
         internal static string BadColumnCast {

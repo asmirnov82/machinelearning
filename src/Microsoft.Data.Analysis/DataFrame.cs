@@ -192,15 +192,15 @@ namespace Microsoft.Data.Analysis
         /// </summary>
         public DataFrame Clone()
         {
-            return Clone(mapIndices: null, invertMapIndices: false);
+            return Clone(mapIndices: null);
         }
 
-        private DataFrame Clone(DataFrameColumn mapIndices = null, bool invertMapIndices = false)
+        private DataFrame Clone(DataFrameColumn mapIndices = null)
         {
             List<DataFrameColumn> newColumns = new List<DataFrameColumn>(Columns.Count);
             for (int i = 0; i < Columns.Count; i++)
             {
-                newColumns.Add(Columns[i].Clone(mapIndices, invertMapIndices));
+                newColumns.Add(Columns[i].Clone(mapIndices));
             }
             return new DataFrame(newColumns);
         }
