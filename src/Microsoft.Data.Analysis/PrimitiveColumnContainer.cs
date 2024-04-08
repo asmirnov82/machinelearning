@@ -419,8 +419,7 @@ namespace Microsoft.Data.Analysis
             return ret;
         }
 
-        public PrimitiveColumnContainer<T> Clone<U>(PrimitiveColumnContainer<U> mapIndices, Type type, bool invertMapIndices = false)
-            where U : unmanaged
+        public PrimitiveColumnContainer<T> Clone(PrimitiveColumnContainer<int> mapIndices, bool invertMapIndices = false)
         {
             ReadOnlySpan<T> thisSpan = Buffers[0].ReadOnlySpan;
             ReadOnlySpan<byte> thisNullBitMapSpan = NullBitMapBuffers[0].ReadOnlySpan;
@@ -434,32 +433,79 @@ namespace Microsoft.Data.Analysis
                 if (invertMapIndices)
                     index = mapIndices.Buffers.Count - 1 - b;
 
-                ReadOnlyDataFrameBuffer<U> buffer = mapIndices.Buffers[index];
+                var mapIndicesSpan = mapIndices.Buffers[index].ReadOnlySpan;
                 ReadOnlySpan<byte> mapIndicesNullBitMapSpan = mapIndices.NullBitMapBuffers[index].ReadOnlySpan;
-                ReadOnlySpan<U> mapIndicesSpan = buffer.ReadOnlySpan;
-                ReadOnlySpan<long> mapIndicesLongSpan = default;
-                ReadOnlySpan<int> mapIndicesIntSpan = default;
+
                 DataFrameBuffer<T> mutableBuffer = DataFrameBuffer<T>.GetMutableBuffer(ret.Buffers[index]);
                 ret.Buffers[index] = mutableBuffer;
                 Span<T> retSpan = mutableBuffer.Span;
                 DataFrameBuffer<byte> mutableNullBuffer = DataFrameBuffer<byte>.GetMutableBuffer(ret.NullBitMapBuffers[index]);
                 ret.NullBitMapBuffers[index] = mutableNullBuffer;
                 Span<byte> retNullBitMapSpan = mutableNullBuffer.Span;
-                if (type == typeof(long))
-                {
-                    mapIndicesLongSpan = MemoryMarshal.Cast<U, long>(mapIndicesSpan);
-                }
-                if (type == typeof(int))
-                {
-                    mapIndicesIntSpan = MemoryMarshal.Cast<U, int>(mapIndicesSpan);
-                }
-                for (int i = 0; i < buffer.Length; i++)
+
+                for (int i = 0; i < mapIndicesSpan.Length; i++)
                 {
                     int spanIndex = i;
                     if (invertMapIndices)
-                        spanIndex = buffer.Length - 1 - i;
+                        spanIndex = mapIndicesSpan.Length - 1 - i;
 
-                    long mapRowIndex = mapIndicesIntSpan.IsEmpty ? mapIndicesLongSpan[spanIndex] : mapIndicesIntSpan[spanIndex];
+                    long mapRowIndex = mapIndicesSpan[spanIndex];
+                    bool mapRowIndexIsValid = BitUtility.IsValid(mapIndicesNullBitMapSpan, spanIndex);
+                    if (mapRowIndexIsValid && (mapRowIndex < minRange || mapRowIndex >= maxRange))
+                    {
+                        int bufferIndex = (int)(mapRowIndex / maxCapacity);
+                        thisSpan = Buffers[bufferIndex].ReadOnlySpan;
+                        thisNullBitMapSpan = NullBitMapBuffers[bufferIndex].ReadOnlySpan;
+                        minRange = bufferIndex * maxCapacity;
+                        maxRange = (bufferIndex + 1) * maxCapacity;
+                    }
+                    T value = default;
+                    bool isValid = false;
+                    if (mapRowIndexIsValid)
+                    {
+                        mapRowIndex -= minRange;
+                        value = thisSpan[(int)mapRowIndex];
+                        isValid = BitUtility.IsValid(thisNullBitMapSpan, (int)mapRowIndex);
+                    }
+
+                    retSpan[i] = isValid ? value : default;
+                    ret.SetValidityBit(retNullBitMapSpan, i, isValid);
+                }
+            }
+            return ret;
+        }
+
+        public PrimitiveColumnContainer<T> Clone(PrimitiveColumnContainer<long> mapIndices, bool invertMapIndices = false)
+        {
+            ReadOnlySpan<T> thisSpan = Buffers[0].ReadOnlySpan;
+            ReadOnlySpan<byte> thisNullBitMapSpan = NullBitMapBuffers[0].ReadOnlySpan;
+            long minRange = 0;
+            long maxRange = DataFrameBuffer<T>.MaxCapacity;
+            long maxCapacity = maxRange;
+            PrimitiveColumnContainer<T> ret = new PrimitiveColumnContainer<T>(mapIndices.Length);
+            for (int b = 0; b < mapIndices.Buffers.Count; b++)
+            {
+                int index = b;
+                if (invertMapIndices)
+                    index = mapIndices.Buffers.Count - 1 - b;
+
+                var mapIndicesSpan = mapIndices.Buffers[index].ReadOnlySpan;
+                ReadOnlySpan<byte> mapIndicesNullBitMapSpan = mapIndices.NullBitMapBuffers[index].ReadOnlySpan;
+
+                DataFrameBuffer<T> mutableBuffer = DataFrameBuffer<T>.GetMutableBuffer(ret.Buffers[index]);
+                ret.Buffers[index] = mutableBuffer;
+                Span<T> retSpan = mutableBuffer.Span;
+                DataFrameBuffer<byte> mutableNullBuffer = DataFrameBuffer<byte>.GetMutableBuffer(ret.NullBitMapBuffers[index]);
+                ret.NullBitMapBuffers[index] = mutableNullBuffer;
+                Span<byte> retNullBitMapSpan = mutableNullBuffer.Span;
+
+                for (int i = 0; i < mapIndicesSpan.Length; i++)
+                {
+                    int spanIndex = i;
+                    if (invertMapIndices)
+                        spanIndex = mapIndicesSpan.Length - 1 - i;
+
+                    long mapRowIndex = mapIndicesSpan[spanIndex];
                     bool mapRowIndexIsValid = BitUtility.IsValid(mapIndicesNullBitMapSpan, spanIndex);
                     if (mapRowIndexIsValid && (mapRowIndex < minRange || mapRowIndex >= maxRange))
                     {

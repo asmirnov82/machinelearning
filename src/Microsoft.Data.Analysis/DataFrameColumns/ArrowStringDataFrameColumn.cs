@@ -74,7 +74,7 @@ namespace Microsoft.Data.Analysis
         /// </summary>
         /// <param name="index">The index to look up.</param>
         /// <returns>A boolean value indicating the validity at this <paramref name="index"/>.</returns>
-        public bool IsValid(long index) => NullCount == 0 || GetValidityBit(index);
+        public override bool IsValid(long index) => NullCount == 0 || GetValidityBit(index);
 
         private bool GetValidityBit(long index)
         {
@@ -441,19 +441,19 @@ namespace Microsoft.Data.Analysis
         {
             ArrowStringDataFrameColumn ret = new ArrowStringDataFrameColumn(Name);
 
-            mapIndices.ApplyElementwise((U? mapIndex, long rowIndex) =>
+            for (long i = 0; i < mapIndices.Length; i++)
             {
-                if (mapIndex == null)
+                U? value = mapIndices[i];
+
+                if (value == null)
                 {
                     ret.Append(default);
-                    return mapIndex;
+                    continue;
                 }
 
-                long index = invertMapIndices ? mapIndices.Length - 1 - rowIndex : rowIndex;
+                long index = invertMapIndices ? mapIndices.Length - 1 - i : i;
                 ret.Append(IsValid(index) ? GetBytes(index) : default(ReadOnlySpan<byte>));
-
-                return mapIndex;
-            });
+            }
 
             return ret;
         }

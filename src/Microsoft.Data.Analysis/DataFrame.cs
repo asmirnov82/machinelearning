@@ -408,31 +408,30 @@ namespace Microsoft.Data.Analysis
         /// <param name="options"></param>
         public DataFrame DropNulls(DropNullOptions options = DropNullOptions.Any)
         {
-            DataFrame ret = new DataFrame();
-            PrimitiveDataFrameColumn<bool> filter = new PrimitiveDataFrameColumn<bool>("Filter");
+            using var filter = new NativeMemoryList<bool>();
             if (options == DropNullOptions.Any)
             {
-                filter.AppendMany(true, Rows.Count);
+                filter.AddMany(true, Rows.Count);
 
                 for (int i = 0; i < Columns.Count; i++)
                 {
-                    DataFrameColumn column = Columns[i];
-                    filter.ApplyElementwise((bool? value, long index) =>
+                    var column = Columns[i];
+                    for (long index = 0; index < Rows.Count; index++)
                     {
-                        return value.Value && (column[index] == null ? false : true);
-                    });
+                        filter[index] = filter[index] && column.IsValid(index);
+                    }
                 }
             }
             else
             {
-                filter.AppendMany(false, Rows.Count);
+                filter.AddMany(false, Rows.Count);
                 for (int i = 0; i < Columns.Count; i++)
                 {
-                    DataFrameColumn column = Columns[i];
-                    filter.ApplyElementwise((bool? value, long index) =>
+                    var column = Columns[i];
+                    for (long index = 0; index < Rows.Count; index++)
                     {
-                        return value.Value || (column[index] == null ? false : true);
-                    });
+                        filter[index] = filter[index] || column.IsValid(index);
+                    }
                 }
             }
             return this[filter];

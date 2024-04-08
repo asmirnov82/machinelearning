@@ -140,6 +140,8 @@ namespace Microsoft.Data.Analysis
         [Obsolete]
         public void SetName(string newName, DataFrame dataFrame) => SetName(newName);
 
+        public virtual bool IsValid(long index) => this[index] != null;
+
         /// <summary>
         /// The type of data this column holds.
         /// </summary>

@@ -744,8 +744,9 @@ namespace Microsoft.Data.Analysis.Tests
         public void TestDropNulls()
         {
             DataFrame df = MakeDataFrameWithAllMutableColumnTypes(20);
+            df[0, 0] = null;
             DataFrame anyNulls = df.DropNulls();
-            Assert.Equal(19, anyNulls.Rows.Count);
+            Assert.Equal(18, anyNulls.Rows.Count);
 
             DataFrame allNulls = df.DropNulls(DropNullOptions.All);
             Assert.Equal(19, allNulls.Rows.Count);

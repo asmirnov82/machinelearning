@@ -311,8 +311,7 @@ namespace Microsoft.Data.Analysis
             return ret;
         }
 
-        private StringDataFrameColumn CloneImplementation<U>(PrimitiveDataFrameColumn<U> mapIndices, bool invertMapIndices = false)
-            where U : unmanaged
+        private StringDataFrameColumn CloneImplementation(PrimitiveDataFrameColumn<long> mapIndices, bool invertMapIndices = false)
         {
             mapIndices = mapIndices ?? throw new ArgumentNullException(nameof(mapIndices));
             StringDataFrameColumn ret = new StringDataFrameColumn(Name, mapIndices.Length);
@@ -324,70 +323,74 @@ namespace Microsoft.Data.Analysis
             long getBufferMinRange = 0;
             long getBufferMaxRange = MaxCapacity;
             long maxCapacity = MaxCapacity;
-            if (mapIndices.DataType == typeof(long))
+
+            mapIndices.ApplyElementwise((long? mapIndex, long rowIndex) =>
             {
-                PrimitiveDataFrameColumn<long> longMapIndices = mapIndices as PrimitiveDataFrameColumn<long>;
-                longMapIndices.ApplyElementwise((long? mapIndex, long rowIndex) =>
+                long index = rowIndex;
+                if (invertMapIndices)
+                    index = mapIndices.Length - 1 - index;
+                if (index < setBufferMinRange || index >= setBufferMaxRange)
                 {
-                    long index = rowIndex;
-                    if (invertMapIndices)
-                        index = longMapIndices.Length - 1 - index;
-                    if (index < setBufferMinRange || index >= setBufferMaxRange)
-                    {
-                        int bufferIndex = (int)(index / maxCapacity);
-                        setBuffer = ret._stringBuffers[bufferIndex];
-                        setBufferMinRange = bufferIndex * maxCapacity;
-                        setBufferMaxRange = (bufferIndex + 1) * maxCapacity;
-                    }
-                    index -= setBufferMinRange;
-                    if (mapIndex == null)
-                    {
-                        setBuffer[(int)index] = null;
-                        return mapIndex;
-                    }
-
-                    if (mapIndex.Value < getBufferMinRange || mapIndex.Value >= getBufferMaxRange)
-                    {
-                        int bufferIndex = (int)(mapIndex.Value / maxCapacity);
-                        getBuffer = _stringBuffers[bufferIndex];
-                        getBufferMinRange = bufferIndex * maxCapacity;
-                        getBufferMaxRange = (bufferIndex + 1) * maxCapacity;
-                    }
-                    int bufferLocalMapIndex = (int)(mapIndex - getBufferMinRange);
-                    string value = getBuffer[bufferLocalMapIndex];
-                    setBuffer[(int)index] = value;
-                    if (value != null)
-                        ret._nullCount--;
-
-                    return mapIndex;
-                });
-            }
-            else if (mapIndices.DataType == typeof(int))
-            {
-                PrimitiveDataFrameColumn<int> intMapIndices = mapIndices as PrimitiveDataFrameColumn<int>;
-                intMapIndices.ApplyElementwise((int? mapIndex, long rowIndex) =>
+                    int bufferIndex = (int)(index / maxCapacity);
+                    setBuffer = ret._stringBuffers[bufferIndex];
+                    setBufferMinRange = bufferIndex * maxCapacity;
+                    setBufferMaxRange = (bufferIndex + 1) * maxCapacity;
+                }
+                index -= setBufferMinRange;
+                if (mapIndex == null)
                 {
-                    long index = rowIndex;
-                    if (invertMapIndices)
-                        index = intMapIndices.Length - 1 - index;
-
-                    if (mapIndex == null)
-                    {
-                        setBuffer[(int)index] = null;
-                        return mapIndex;
-                    }
-                    string value = getBuffer[mapIndex.Value];
-                    setBuffer[(int)index] = value;
-                    if (value != null)
-                        ret._nullCount--;
-
+                    setBuffer[(int)index] = null;
                     return mapIndex;
-                });
-            }
-            else
+                }
+
+                if (mapIndex.Value < getBufferMinRange || mapIndex.Value >= getBufferMaxRange)
+                {
+                    int bufferIndex = (int)(mapIndex.Value / maxCapacity);
+                    getBuffer = _stringBuffers[bufferIndex];
+                    getBufferMinRange = bufferIndex * maxCapacity;
+                    getBufferMaxRange = (bufferIndex + 1) * maxCapacity;
+                }
+                int bufferLocalMapIndex = (int)(mapIndex - getBufferMinRange);
+                string value = getBuffer[bufferLocalMapIndex];
+                setBuffer[(int)index] = value;
+                if (value != null)
+                    ret._nullCount--;
+
+                return mapIndex;
+            });
+
+            return ret;
+        }
+
+        private StringDataFrameColumn CloneImplementation(PrimitiveDataFrameColumn<int> mapIndices, bool invertMapIndices = false)
+        {
+            mapIndices = mapIndices ?? throw new ArgumentNullException(nameof(mapIndices));
+            StringDataFrameColumn ret = new StringDataFrameColumn(Name, mapIndices.Length);
+
+            List<string> setBuffer = ret._stringBuffers[0];
+            long setBufferMaxRange = MaxCapacity;
+            List<string> getBuffer = _stringBuffers[0];
+            long getBufferMaxRange = MaxCapacity;
+            long maxCapacity = MaxCapacity;
+
+            mapIndices.ApplyElementwise((int? mapIndex, long rowIndex) =>
             {
-                Debug.Assert(false, nameof(mapIndices.DataType));
-            }
+                long index = rowIndex;
+                if (invertMapIndices)
+                    index = mapIndices.Length - 1 - index;
+
+                if (mapIndex == null)
+                {
+                    setBuffer[(int)index] = null;
+                    return mapIndex;
+                }
+                string value = getBuffer[mapIndex.Value];
+                setBuffer[(int)index] = value;
+                if (value != null)
+                    ret._nullCount--;
+
+                return mapIndex;
+            });
 
             return ret;
         }
